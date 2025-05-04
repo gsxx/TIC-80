@@ -1,0 +1,57 @@
+name: Build TIC-80 Pro (Multi-Platform)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake git libsdl2-dev
+        
+    - name: Configure and build (Linux)
+      run: |
+        mkdir build
+        cd build
+        cmake -DBUILD_PRO=ON ..
+        make -j4
+        
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: tic80-pro-linux
+        path: build/bin/tic80
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies (Windows)
+      run: |
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+        choco install mingw -y
+        
+    - name: Configure and build (Windows)
+      run: |
+        mkdir build
+        cd build
+        cmake -G "MinGW Makefiles" -DBUILD_PRO=ON ..
+        cmake --build . --config Release
+        
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: tic80-pro-windows
+        path: build/bin/Release/tic80.exe
